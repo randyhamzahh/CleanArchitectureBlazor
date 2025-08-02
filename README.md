@@ -32,7 +32,7 @@ The project follows the principles of Clean Architecture, with dependencies poin
 
 1.  **Clone the Repository**
     ```bash
-    git clone <YOUR_REPOSITORY_URL>
+    git clone git@github.com:randyhamzahh/CleanArchitectureBlazor.git
     cd CleanArchitectureBlazor
     ```
 
