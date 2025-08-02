@@ -1,0 +1,48 @@
+@page "/products/{ProductId:int}"
+@inject HttpClient Http
+@using Core.Entities
+
+<h3>Product Details</h3>
+
+@if (product == null && !loadFailed)
+{
+    <p><em>Loading...</em></p>
+}
+else if (loadFailed)
+{
+    <p class="text-danger">Failed to load product. Please try again later.</p>
+}
+else if (product != null)
+{
+    <div class="card" style="width: 18rem;">
+        <div class="card-body">
+            <h5 class="card-title">@product.Name</h5>
+            <h6 class="card-subtitle mb-2 text-muted">@product.Price.ToString("C")</h6>
+            <p class="card-text">@product.Description</p>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int ProductId { get; set; }
+
+    private Product? product;
+    private bool loadFailed = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // The HttpClient now knows its BaseAddress from Program.cs,
+            // so we can use a simple relative URI.
+            product = await Http.GetFromJsonAsync<Product>($"api/products/{ProductId}");
+        }
+        catch (Exception ex)
+        {
+            // This catch block is important for debugging!
+            Console.WriteLine($"Error fetching product: {ex.Message}");
+            loadFailed = true;
+        }
+    }
+}

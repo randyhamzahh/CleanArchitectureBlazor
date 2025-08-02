@@ -1,0 +1,180 @@
+@page "/products"
+@using Core.Entities
+@using Application.DTOs
+@inject HttpClient Http
+@rendermode InteractiveServer
+
+<PageTitle>Products</PageTitle>
+
+<h1>Product Management</h1>
+
+<button class="btn btn-success mb-3" @onclick="() => OpenProductModal(null)">Add New Product</button>
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                <tr>
+                    <td>@product.Id</td>
+                    <td>@product.Name</td>
+                    <td>@product.Description</td>
+                    <td>@product.Price.ToString("C")</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" @onclick="() => OpenProductModal(product)">Edit</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => OpenDeleteModal(product)">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- Product Add/Edit Modal -->
+@if (showProductModal)
+{
+    <div class="modal fade show" tabindex="-1" style="display: block;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(editingProductId == 0 ? "Add Product" : "Edit Product")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseProductModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input class="form-control" @bind="editingProduct.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <input class="form-control" @bind="editingProduct.Description" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Price</label>
+                        <input type="number" class="form-control" @bind="editingProduct.Price" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseProductModal">Cancel</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveProduct">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (productToDelete != null)
+{
+    <div class="modal fade show" tabindex="-1" style="display: block;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDeleteModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete the product: <strong>@productToDelete.Name</strong>?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDeleteModal">Cancel</button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+
+@code {
+    private List<Product>? products;
+    private bool showProductModal = false;
+    private ProductDto editingProduct = new() { Name = "" };
+    private int editingProductId = 0;
+    private Product? productToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        products = await Http.GetFromJsonAsync<List<Product>>("api/products");
+    }
+
+    private void OpenProductModal(Product? product)
+    {
+        if (product == null)
+        {
+            // Adding a new product
+            editingProduct = new ProductDto { Name = "", Description = "", Price = 0 };
+            editingProductId = 0;
+        }
+        else
+        {
+            // Editing an existing product
+            editingProduct = new ProductDto { Name = product.Name, Description = product.Description, Price = product.Price };
+            editingProductId = product.Id;
+        }
+        showProductModal = true;
+    }
+
+    private void CloseProductModal()
+    {
+        showProductModal = false;
+    }
+
+    private async Task SaveProduct()
+    {
+        if (editingProductId == 0)
+        {
+            // Create
+            await Http.PostAsJsonAsync("api/products", editingProduct);
+        }
+        else
+        {
+            // Update
+            await Http.PutAsJsonAsync($"api/products/{editingProductId}", editingProduct);
+        }
+
+        CloseProductModal();
+        await LoadProducts();
+    }
+
+    private void OpenDeleteModal(Product product)
+    {
+        productToDelete = product;
+    }
+
+    private void CloseDeleteModal()
+    {
+        productToDelete = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (productToDelete != null)
+        {
+            await Http.DeleteAsync($"api/products/{productToDelete.Id}");
+            CloseDeleteModal();
+            await LoadProducts();
+        }
+    }
+}
