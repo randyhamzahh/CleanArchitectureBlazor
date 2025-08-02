@@ -40,25 +40,19 @@ The project follows the principles of Clean Architecture, with dependencies poin
     * Open the `docker-compose.yml` file.
     * Change the `SA_PASSWORD` environment variable to your own strong password.
 
-3.  **Start the Database Container**
-    * Make sure Docker Desktop is running.
-    * In your terminal, run the following command to start the SQL Server container in the background:
-        ```bash
-        docker-compose up -d
-        ```
 
-4.  **Update the Connection String**
+3.  **Update the Connection String**
     * Open the `Web/appsettings.json` file.
-    * Update the `Password` in the `DefaultConnection` string to match the `SA_PASSWORD` you set in the `docker-compose.yml` file.
+    * Update the `DefaultConnection` string to match the database you have (use SQL SERVER Database).
 
-5.  **Apply Database Migrations**
+4.  **Apply Database Migrations**
     * This command will create the database and all the necessary tables (Products, Identity, etc.).
     * Run this from the root directory of the project:
         ```bash
         dotnet ef database update --startup-project Web
         ```
 
-6.  **Run the Application**
+5.  **Run the Application**
     * Navigate to the `Web` project folder and run the application:
         ```bash
         cd Web
